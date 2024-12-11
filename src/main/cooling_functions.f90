@@ -37,7 +37,7 @@ module cooling_functions
            cooling_Bowen_relaxation, &
            cooling_dust_collision, &
            cooling_radiative_relaxation, &
-           testing_cooling_functions
+           testing_cooling_functions, &
 
  private
  real, parameter  :: xH = 0.7, xHe = 0.28 !assumed H and He mass fractions
@@ -48,28 +48,28 @@ contains
 !  Piecewise cooling law for simple shock problem (Creasey et al. 2011)
 !+
 !-----------------------------------------------------------------------
-subroutine piecewise_law(T, T0, rho_cgs, ndens, Q, dlnQ)
+subroutine piecewise_law(T, T0, rho_cgs, ndens, Q, dlnQ_dlnT)
 
  real, intent(in)  :: T, T0, rho_cgs, ndens
- real, intent(out) :: Q, dlnQ
+ real, intent(out) :: Q, dlnQ_dlnT
  real :: T1,Tmid !,dlnT,fac
 
  T1 = T1_factor*T0
  Tmid = 0.5*(T0+T1)
  if (T < T0) then
     Q    = 0.
-    dlnQ = 0.
+    dlnQ_dlnT = 0.
  elseif (T >= T0 .and. T <= Tmid) then
     !dlnT = (T-T0)/(T0/100.)
     Q = -lambda_shock_cgs*ndens**2/rho_cgs*(T-T0)/T0
     !fac = 2./(1.d0 + exp(dlnT))
-    dlnQ = 1./(T-T0+epsilon(0.))
+    dlnQ_dlnT = T/(T-T0+epsilon(0.))
  elseif (T >= Tmid .and. T <= T1) then
     Q = -lambda_shock_cgs*ndens**2/rho_cgs*(T1-T)/T0
-    dlnQ = -1./(T1-T+epsilon(0.))
+    dlnQ_dlnT = -T/(T1-T+epsilon(0.))
  else
     Q    = 0.
-    dlnQ = 0.
+    dlnQ_dlnT = 0.
  endif
  !derivatives are discontinuous!
 

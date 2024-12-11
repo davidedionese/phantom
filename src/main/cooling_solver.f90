@@ -35,7 +35,7 @@ module cooling_solver
  character(len=*), parameter :: label = 'cooling_library'
  integer, public :: excitation_HI = 0, relax_Bowen = 0, dust_collision = 0, relax_Stefan = 0, shock_problem = 0
  integer, public :: icool_method  = 0
- integer, parameter :: nTg  = 64
+ integer, parameter :: nTg  = 1024
  real :: Tref = 1.d7 !higher value of the temperature grid (for exact cooling)
  real :: Tgrid(nTg)
 
@@ -254,8 +254,9 @@ subroutine exact_cooling(ui, dudt, rho, dt, mu, gamma, Tdust, K2, kappa)
        else
          dlnQ_dlnT = 0.
        endif
-       Q = Q-1.d-80 !enforce Q /=0
+       Q = Q-epsilon(0.) !enforce Q /=0
 
+       dlnQ_dlnT = sign(min(50.,abs(dlnQ_dlnT)),dlnQ_dlnT)
        Qi = Q
        ! eqs A6 to get Yk
        if (abs(dlnQ_dlnT-1.) < tol) then
@@ -285,8 +286,9 @@ subroutine exact_cooling(ui, dudt, rho, dt, mu, gamma, Tdust, K2, kappa)
        else
          dlnQ_dlnT = 0.
        endif
-       Q = Q-1.d-80 !enforce Q /=0
+       Q = Q-epsilon(0.) !enforce Q /=0
 
+       dlnQ_dlnT = sign(min(50.,abs(dlnQ_dlnT)),dlnQ_dlnT)
        Qi = Q
        ! eqs A6 to get Yk
        if (abs(dlnQ_dlnT-1.) < tol) then
@@ -323,7 +325,7 @@ subroutine calc_cooling_rate(Q, dlnQ_dlnT, rho, T, Teq, mu, gamma, K2, kappa)
  use physcon, only:mass_proton_cgs
  use cooling_functions, only:cooling_neutral_hydrogen,&
      cooling_Bowen_relaxation,cooling_dust_collision,&
-     cooling_radiative_relaxation,piecewise_law,testing_cooling_functions
+     cooling_radiative_relaxation,piecewise_law,testing_cooling_functions,
  !use cooling_molecular, only:do_molecular_cooling,calc_cool_molecular
 
  real, intent(in)  :: rho, T, Teq     !rho in code units
@@ -481,6 +483,7 @@ subroutine set_Tgrid
  if (shock_problem  == 1) then
     T1 =   T1_factor * T0_value
     Tref = T1 - (T1 - T0_value)/10000. !slightly below T1 so Qref /= 0
+    Tmin = 1.d5
     !Tref = (T1_factor - (T1_factor - 1.))*T0_value/10000.
  endif
 
